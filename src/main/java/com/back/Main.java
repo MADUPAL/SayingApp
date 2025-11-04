@@ -38,7 +38,7 @@ public class Main {
 
             } else if(command.contains("삭제")) {
 
-                int id = Integer.parseInt(command.substring(command.indexOf("=")+1));
+                int id = findIdFromCommand(command);
                 Say result = mySayService.findById(id);
                 if (result == null) {
                     System.out.println(id + "번 명언은 존재하지 않습니다.");
@@ -48,7 +48,7 @@ public class Main {
                 System.out.println(id + "번 명언이 삭제되었습니다.");
 
             } else if (command.contains("수정")) {
-                int id = Integer.parseInt(command.substring(command.indexOf("=")+1));
+                int id = findIdFromCommand(command);
                 Say result = mySayService.findById(id);
                 if (result == null) {
                     System.out.println(id + "번 명언은 존재하지 않습니다.");
@@ -67,5 +67,8 @@ public class Main {
             }
         }
         sc.close();
+    }
+    private static int findIdFromCommand(String command) {
+        return Integer.parseInt(command.substring(command.indexOf("=")+1));
     }
 }
