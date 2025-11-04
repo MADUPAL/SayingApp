@@ -2,7 +2,6 @@ package com.back;
 
 import com.back.say.MyHashMapSayRepository;
 import com.back.say.Say;
-import com.back.say.SayRepository;
 import com.back.say.SayService;
 
 import java.util.Scanner;
