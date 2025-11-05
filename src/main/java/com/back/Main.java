@@ -4,6 +4,7 @@ import com.back.say.MyHashMapSayRepository;
 import com.back.say.Say;
 import com.back.say.SayService;
 
+import java.util.List;
 import java.util.Scanner;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
@@ -22,18 +23,21 @@ public class Main {
                 break;
             } else if (command.equals("등록")) {
                 System.out.print("명언 : ");
-                String author = sc.nextLine();
+                String content = sc.nextLine();
 
                 System.out.print("작가 : ");
-                String say = sc.nextLine();
+                String author = sc.nextLine();
 
-                int savedId = mySayService.save(author, say);
+                int savedId = mySayService.save(author, content);
                 System.out.println(savedId + "번 명언이 등록되었습니다.");
 
             } else if (command.equals("목록")) {
                 System.out.println("번호 / 작가 / 명언");
                 System.out.println("=====================");
-                mySayService.printAll();
+                List<Say> allSays = mySayService.findAll();
+                for (Say say : allSays) {
+                    System.out.printf("%d / %s / %s%n", say.getId(), say.getAuthor(), say.getContent());
+                }
 
             } else if(command.contains("삭제")) {
 
