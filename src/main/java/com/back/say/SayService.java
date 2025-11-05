@@ -10,7 +10,7 @@ public class SayService {
     }
 
     public int save(String author, String content) {
-        Say say = new Say(content, author);
+        Say say = new Say(author, content);
 
         return sayRepository.save(say);
     }
@@ -19,11 +19,8 @@ public class SayService {
         return sayRepository.findById(id);
     }
 
-    public void printAll() {
-        List<Say> allSays = sayRepository.findAll();
-        for (Say say : allSays) {
-            System.out.println(say.getId() + " / " + say.getAuthor() + " / " + say.getContent());
-        }
+    public List<Say> findAll() {
+        return sayRepository.findAll();
     }
 
     public void delete(int id) {
