@@ -23,10 +23,10 @@ public class Main {
                 break;
             } else if (command.equals("등록")) {
                 System.out.print("명언 : ");
-                String content = sc.nextLine();
+                String content = sc.nextLine().trim();
 
                 System.out.print("작가 : ");
-                String author = sc.nextLine();
+                String author = sc.nextLine().trim();
 
                 int savedId = mySayService.save(author, content);
                 System.out.println(savedId + "번 명언이 등록되었습니다.");
@@ -36,7 +36,7 @@ public class Main {
                 System.out.println("=====================");
                 List<Say> allSays = mySayService.findAll();
                 for (Say say : allSays) {
-                    System.out.printf("%d / %s / %s%n", say.getId(), say.getAuthor(), say.getContent());
+                    System.out.println(say);
                 }
 
             } else if(command.contains("삭제")) {

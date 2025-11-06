@@ -28,4 +28,9 @@ public class Say {
     public void setId(int id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return id + " / " + author + " / " + content;
+    }
 }
