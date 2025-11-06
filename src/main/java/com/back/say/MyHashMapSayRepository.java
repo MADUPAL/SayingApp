@@ -6,7 +6,7 @@ import java.util.List;
 public class MyHashMapSayRepository implements SayRepository {
 
     private int id;
-    private HashMap<Integer, Say> sayMap;
+    private final HashMap<Integer, Say> sayMap;
 
     public MyHashMapSayRepository() {
         id = 0;
@@ -35,8 +35,8 @@ public class MyHashMapSayRepository implements SayRepository {
 
     @Override
     public Say findById(int id) {
-        if (!sayMap.containsKey(id))
-            return null;
+/*        if (!sayMap.containsKey(id))
+            return null;*/
 
         return sayMap.get(id);
     }
