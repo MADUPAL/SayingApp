@@ -1,0 +1,112 @@
+package com.back.say.controller;
+
+import com.back.say.domain.Say;
+import com.back.say.dto.SayDto;
+import com.back.say.exception.SayNotFoundException;
+import com.back.say.service.SayService;
+
+import java.util.List;
+import java.util.Scanner;
+
+public class SayController {
+    private final SayService sayService;
+    private final Scanner sc;
+
+    public SayController(SayService sayService, Scanner sc) {
+        this.sayService = sayService;
+        this.sc = sc;
+    }
+
+    public void run() {
+        System.out.println("== 명언 앱 ==");
+        while (true) {
+            System.out.print("명령) ");
+            String cmd = sc.nextLine().trim();
+
+            if (cmd.equals("종료"))
+                break;
+
+            handle(cmd);
+        }
+    }
+
+    private void handle(String cmd) {
+        if (cmd.equals("등록"))
+            handleCreate();
+        else if (cmd.equals("목록"))
+            handleList();
+        else if (cmd.startsWith("삭제?id="))
+            handleDelete(parseId(cmd));
+        else if (cmd.startsWith("수정?id="))
+            handleUpdate(parseId(cmd));
+        else
+            System.out.println("잘못된 명령입니다.");
+    }
+
+    private void handleCreate() {
+        try {
+            System.out.print("명언 : ");
+            String content = sc.nextLine().trim();
+
+            System.out.print("작가 : ");
+            String author = sc.nextLine().trim();
+
+            int savedId = sayService.save(new SayDto(author, content));
+            System.out.println(savedId + "번 명언이 등록되었습니다.");
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void handleList() {
+        System.out.println("번호 / 작가 / 명언");
+        System.out.println("=====================");
+        List<Say> allSays = sayService.findAll();
+        for (Say say : allSays) {
+            System.out.println(say);
+        }
+    }
+
+    private void handleDelete(int id) {
+        try {
+            sayService.findById(id);
+            int deletedId = sayService.delete(id);
+            System.out.println(deletedId + "번 명언이 삭제되었습니다.");
+        } catch (SayNotFoundException e) {
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    private void handleUpdate(int id) {
+        try {
+            Say result = sayService.findById(id);
+            System.out.println("명언(기존) : " + result.getContent());
+            System.out.print("명언 : ");
+            String updateContent = sc.nextLine();
+
+            System.out.println("작가(기존) : " + result.getAuthor());
+            System.out.print("작가 : ");
+            String updateAuthor = sc.nextLine();
+
+            int updatedId = sayService.update(id, new SayDto(updateAuthor, updateContent));
+            System.out.println(updatedId + "번 명언이 수정되었습니다.");
+        } catch (SayNotFoundException e) {
+            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("오류가 발생했습니다: " + e.getMessage());
+        }
+
+    }
+
+    private int parseId(String command) {
+        return Integer.parseInt(command.substring(command.indexOf("=")+1));
+//        split("=", 2);
+//        try {
+//
+//        } catch (NumberFormatException e) {
+//            System.out.println("");
+//        }
+    }
+}
