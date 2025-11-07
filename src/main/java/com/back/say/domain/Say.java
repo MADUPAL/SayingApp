@@ -1,6 +1,4 @@
-package com.back.say;
-
-import java.util.Objects;
+package com.back.say.domain;
 
 public class Say {
 
@@ -8,7 +6,8 @@ public class Say {
     private String author;
     private String content;
 
-    public Say(String author, String content) {
+    public Say(int id, String author, String content) {
+        this.id = id;
         this.author = author;
         this.content = content;
     }
@@ -23,10 +22,6 @@ public class Say {
 
     public String getContent() {
         return content;
-    }
-
-    public void setId(int id) {
-        this.id = id;
     }
 
     @Override
