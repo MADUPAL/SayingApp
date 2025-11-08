@@ -1,7 +1,6 @@
 package com.back.say.repository;
 
 import com.back.say.domain.Say;
-import com.back.say.dto.ResponseSayDto;
 import com.back.say.dto.SayDto;
 
 import java.util.HashMap;
@@ -51,10 +50,12 @@ public class InMemorySayRepository implements SayRepository {
     }
 
     @Override
-    public List<ResponseSayDto> findAll() {
-        return sayMap.values().stream()
-                .map(say-> new ResponseSayDto(say.getId(), say.getAuthor(), say.getContent()))
-                .toList();
+    public List<Say> findAll() {
+        return sayMap.values().stream().toList();
+    }
+
+    @Override
+    public void build() {
 
     }
 }

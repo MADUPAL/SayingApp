@@ -34,7 +34,9 @@ public class SayService {
     }
 
     public List<ResponseSayDto> findAll() {
-        return sayRepository.findAll();
+        return sayRepository.findAll().stream()
+                .map(say->new ResponseSayDto(say.getId(), say.getAuthor(), say.getContent()))
+                .toList();
     }
 
     public int delete(int id) {
@@ -49,5 +51,9 @@ public class SayService {
         if (updatedId == -1)
             throw new SayNotFoundException(id);
         return updatedId;
+    }
+
+    public void build() {
+        sayRepository.build();
     }
 }
