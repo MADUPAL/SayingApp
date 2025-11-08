@@ -52,8 +52,13 @@ public class SayController {
                 }
                 handleUpdate(id);
             }
+            case "빌드" -> handleBuild();
             case "도움" -> handleHelp();
         }
+    }
+
+    private void handleBuild() {
+        sayService.build();
     }
 
     private void handleHelp() {
