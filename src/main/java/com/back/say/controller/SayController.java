@@ -123,13 +123,4 @@ public class SayController {
 
     }
 
-    private int parseId(String command) {
-        return Integer.parseInt(command.substring(command.indexOf("=")+1));
-//        split("=", 2);
-//        try {
-//
-//        } catch (NumberFormatException e) {
-//            System.out.println("");
-//        }
-    }
 }
