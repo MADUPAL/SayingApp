@@ -1,10 +1,13 @@
 package com.back.say.service;
 
 import com.back.say.domain.Say;
+import com.back.say.dto.ResponseSayDto;
 import com.back.say.dto.SayDto;
+import com.back.say.exception.SayNotFoundException;
 import com.back.say.repository.SayRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class SayService {
     private final SayRepository sayRepository;
@@ -22,18 +25,29 @@ public class SayService {
         return sayRepository.create(dto);
     }
 
-    public Say findById(int id) {
-        return sayRepository.findById(id);
+    public ResponseSayDto findById(int id) {
+        Optional<Say> result = sayRepository.findById(id);
+        if (result.isEmpty())
+            throw new SayNotFoundException(id);
+        Say say = result.get();
+        return new ResponseSayDto(say.getId(), say.getAuthor(), say.getContent());
     }
 
-    public List<Say> findAll() {
+    public List<ResponseSayDto> findAll() {
         return sayRepository.findAll();
     }
 
     public int delete(int id) {
-        return sayRepository.delete(id);
+        int deletedId = sayRepository.delete(id);
+        if (deletedId == -1)
+            throw new SayNotFoundException(id);
+        return deletedId;
     }
+
     public int update(int id, SayDto dto) {
-        return sayRepository.update(id, dto);
+        int updatedId = sayRepository.update(id, dto);
+        if (updatedId == -1)
+            throw new SayNotFoundException(id);
+        return updatedId;
     }
 }

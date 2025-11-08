@@ -1,11 +1,12 @@
 package com.back.say.repository;
 
 import com.back.say.domain.Say;
+import com.back.say.dto.ResponseSayDto;
 import com.back.say.dto.SayDto;
-import com.back.say.exception.SayNotFoundException;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public class InMemorySayRepository implements SayRepository {
 
@@ -28,7 +29,7 @@ public class InMemorySayRepository implements SayRepository {
     @Override
     public int update(int id, SayDto dto) {
         if (!sayMap.containsKey(id))
-            throw new SayNotFoundException(id);
+            return -1;
         Say updated = sayMap.put(id, new Say(id, dto.getAuthor(), dto.getContent()));
         return updated.getId();
     }
@@ -36,23 +37,24 @@ public class InMemorySayRepository implements SayRepository {
     @Override
     public int delete(int id) {
         if (!sayMap.containsKey(id))
-            throw new SayNotFoundException(id);
+            return -1;
         Say removed = sayMap.remove(id);
         return removed.getId();
     }
 
     @Override
-    public Say findById(int id) {
+    public Optional<Say> findById(int id) {
         Say say = sayMap.get(id);
-        if (say == null) {
-            throw new SayNotFoundException(id);
-        }
-        return say;
+        if(say == null)
+            return Optional.empty();
+        return Optional.of(say);
     }
 
     @Override
-    public List<Say> findAll() {
-        return sayMap.values().stream().toList();
+    public List<ResponseSayDto> findAll() {
+        return sayMap.values().stream()
+                .map(say-> new ResponseSayDto(say.getId(), say.getAuthor(), say.getContent()))
+                .toList();
 
     }
 }
