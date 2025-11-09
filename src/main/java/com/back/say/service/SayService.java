@@ -16,7 +16,7 @@ public class SayService {
         this.sayRepository = sayRepository;
     }
 
-    public int save(SayDto dto) {
+    public int create(SayDto dto) {
         if (dto.getAuthor() == null || dto.getAuthor().isBlank())
             throw new IllegalArgumentException("작가는 비어있을 수 없습니다.");
         if (dto.getContent() == null || dto.getContent().isBlank())

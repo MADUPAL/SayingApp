@@ -79,19 +79,25 @@ public class SayController {
             System.out.print("작가 : ");
             String author = sc.nextLine().trim();
 
-            int savedId = sayService.save(new SayDto(author, content));
+            int savedId = sayService.create(new SayDto(author, content));
             System.out.println(savedId + "번 명언이 등록되었습니다.");
         } catch (IllegalArgumentException e) {
             System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("오류가 발생했습니다: " + e.getMessage());
         }
     }
 
     private void handleList() {
-        System.out.println("번호 / 작가 / 명언");
-        System.out.println("=====================");
-        List<ResponseSayDto> allSays = sayService.findAll();
-        for (ResponseSayDto allSay : allSays) {
-            System.out.println(allSay);
+        try {
+            System.out.println("번호 / 작가 / 명언");
+            System.out.println("=====================");
+            List<ResponseSayDto> allSays = sayService.findAll();
+            for (ResponseSayDto allSay : allSays) {
+                System.out.println(allSay);
+            }
+        } catch (Exception e) {
+            System.out.println("오류가 발생했습니다: " + e.getMessage());
         }
     }
 

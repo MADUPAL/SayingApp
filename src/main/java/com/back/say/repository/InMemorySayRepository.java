@@ -29,16 +29,16 @@ public class InMemorySayRepository implements SayRepository {
     public int update(int id, SayDto dto) {
         if (!sayMap.containsKey(id))
             return -1;
-        Say updated = sayMap.put(id, new Say(id, dto.getAuthor(), dto.getContent()));
-        return updated.getId();
+        sayMap.put(id, new Say(id, dto.getAuthor(), dto.getContent()));
+        return id;
     }
 
     @Override
     public int delete(int id) {
         if (!sayMap.containsKey(id))
             return -1;
-        Say removed = sayMap.remove(id);
-        return removed.getId();
+        sayMap.remove(id);
+        return id;
     }
 
     @Override
