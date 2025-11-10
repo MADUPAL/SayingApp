@@ -58,4 +58,19 @@ public class InMemorySayRepository implements SayRepository {
     public void build() {
 
     }
+
+    @Override
+    public List<Say> findAllPaged(int offset, int limit) {
+        return List.of();
+    }
+
+    @Override
+    public List<Say> findByAuthorContains(String keyword) {
+        return List.of();
+    }
+
+    @Override
+    public List<Say> findByContentContains(String keyword) {
+        return List.of();
+    }
 }

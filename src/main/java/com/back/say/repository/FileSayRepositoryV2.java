@@ -9,28 +9,39 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class FileSayRepositoryV1 implements SayRepository{
+import static java.nio.charset.StandardCharsets.*;
+import static java.nio.file.StandardOpenOption.*;
+
+public class FileSayRepositoryV2 implements SayRepository{
     private final Path dirPath;
     private final Path idPath;
+    private final Path dataPath;
     private static final String LAST_ID_FILE = "lastId.txt";
+    private static final String DATA_FILE = "data.json";
 
-    public FileSayRepositoryV1() {
+    private List<Say> sayCache;
+    private boolean loaded = false;
+
+    public FileSayRepositoryV2() {
         dirPath = Path.of("db/wiseSaying/");
         idPath = dirPath.resolve(LAST_ID_FILE);
+        dataPath = dirPath.resolve(DATA_FILE);
     }
 
     @Override
     public int create(SayDto dto) {
+        loadDataIfNeeded();
         try {
-            ensureDir();
             int id = nextId();
             Say say = new Say(id, dto.getAuthor(), dto.getContent());
-            Path target = fileForId(id);
-            writeJsonToFile(target, toJsonString(say));
+            sayCache.add(say);
+            writeAllJsonToFile(sayCache);
             return id;
         } catch (IOException e) {
             throw new RepositoryException("create 실패", e);
@@ -39,14 +50,19 @@ public class FileSayRepositoryV1 implements SayRepository{
 
     @Override
     public int update(int id, SayDto dto) {
+        loadDataIfNeeded();
+        boolean found = false;
+        for (int i = 0; i < sayCache.size(); i++) {
+            if (sayCache.get(i).getId() == id) {
+                sayCache.set(i, new Say(id, dto.getAuthor(), dto.getContent()));
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            return -1;
         try {
-            ensureDir();
-            Path target = fileForId(id);
-            if (Files.notExists(target))
-                return -1;
-
-            Say newSay = new Say(id, dto.getAuthor(), dto.getContent());
-            writeJsonToFile(target, toJsonString(newSay));
+            writeAllJsonToFile(sayCache);
             return id;
         } catch (IOException e) {
             throw new RepositoryException("update 실패", e);
@@ -55,13 +71,11 @@ public class FileSayRepositoryV1 implements SayRepository{
 
     @Override
     public int delete(int id) {
+        loadDataIfNeeded();
+        boolean removed = sayCache.removeIf(say -> say.getId() == id);
+        if(!removed) return -1;
         try {
-            ensureDir();
-            Path target = fileForId(id);
-            if (Files.notExists(target))
-                return -1;
-
-            Files.delete(target);
+            writeAllJsonToFile(sayCache);
             return id;
         } catch (IOException e) {
             throw new RepositoryException("delete 실패", e);
@@ -70,45 +84,14 @@ public class FileSayRepositoryV1 implements SayRepository{
 
     @Override
     public Optional<Say> findById(int id) {
-        try {
-            ensureDir();
-            Path target = fileForId(id);
-            if (Files.notExists(target))
-                return Optional.empty();
-
-            String sayStr = Files.readString(target, StandardCharsets.UTF_8);
-            Say say = parseJsonToSay(sayStr);
-            return Optional.of(say);
-        } catch (IOException e) {
-            throw new RepositoryException("findById 실패", e);
-        }
+        loadDataIfNeeded();
+        return sayCache.stream().filter(say->say.getId() == id).findFirst();
     }
 
     @Override
     public List<Say> findAll() {
-        // db/wiseSaying하위 파일 다 불러오기 Files.list(dirPath) -> stream이므로 close() 필수
-        try {
-            ensureDir();
-
-            try(Stream<Path> fileList = Files.list(dirPath)) {
-
-                return fileList
-                        .filter(path -> path.getFileName().toString().endsWith(".json"))
-                        .map(path -> {
-                            try {
-                                String json = Files.readString(path, StandardCharsets.UTF_8);
-                                return parseJsonToSay(json);
-                            } catch (IOException e2) {
-                                throw new RepositoryException("json 파일 읽기 실패 :" + path, e2);
-                            }
-                        })
-//                        .filter(say -> say != null)
-                        .toList();
-
-            }
-        } catch (IOException e1) {
-            throw new RepositoryException("findAll 실패", e1);
-        }
+        loadDataIfNeeded();
+        return new ArrayList<>(sayCache);
     }
 
     /**
@@ -116,7 +99,11 @@ public class FileSayRepositoryV1 implements SayRepository{
      */
     @Override
     public void build() {
-
+        try {
+            writeAllJsonToFile(sayCache);
+        } catch (IOException e) {
+            throw new RepositoryException("build 실패", e);
+        }
     }
 
     @Override
@@ -134,12 +121,46 @@ public class FileSayRepositoryV1 implements SayRepository{
         return List.of();
     }
 
+
+    private void loadDataIfNeeded() {
+        if(loaded)
+            return;
+        try {
+            ensureDir();
+            String json = Files.readString(dataPath, UTF_8).trim();
+            if (json.equals("[]") || json.isBlank()){
+                sayCache = new ArrayList<>();
+            } else {
+                sayCache = parseJsonToSayList(json);
+            }
+            loaded = true;
+        } catch (IOException e) {
+            throw new RepositoryException("data.json 로드 실패", e);
+        }
+    }
+
+    private void writeAllJsonToFile(List<Say> sayList) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[\n");
+        for (int i = 0; i < sayList.size(); i++) {
+            if(i > 0)
+                sb.append(",\n");
+            sb.append(toJsonString(sayList.get(i)));
+        }
+        sb.append("\n]");
+        Files.writeString(dataPath, sb.toString(), UTF_8, CREATE, TRUNCATE_EXISTING);
+
+    }
+
     private void ensureDir() throws IOException {
         if (Files.notExists(dirPath)) {
             Files.createDirectories(dirPath);
         }
         if (Files.notExists(idPath)) {
-            Files.writeString(idPath,"0", StandardOpenOption.CREATE_NEW);
+            Files.writeString(idPath,"0", CREATE_NEW);
+        }
+        if (Files.notExists(dataPath)){
+            Files.writeString(dataPath, "[]", UTF_8, CREATE_NEW);
         }
     }
 
@@ -158,7 +179,7 @@ public class FileSayRepositoryV1 implements SayRepository{
         if (Files.notExists(idPath)) {
             return 0;
         }
-        String txt = Files.readString(idPath, StandardCharsets.UTF_8).trim();
+        String txt = Files.readString(idPath, UTF_8).trim();
         if (txt.isEmpty()) return 0;
 
         return Integer.parseInt(txt);
@@ -168,22 +189,22 @@ public class FileSayRepositoryV1 implements SayRepository{
         Files.writeString(
                 idPath,
                 Integer.toString(id),
-                StandardCharsets.UTF_8,
-                StandardOpenOption.CREATE,              //lastId.txt 없으면 새로만들기 이거 빼면 파일 없을 때 예외 발생
-                StandardOpenOption.TRUNCATE_EXISTING    // 내용 삭제 후 새로 쓰기
+                UTF_8,
+                CREATE,              //lastId.txt 없으면 새로만들기 이거 빼면 파일 없을 때 예외 발생
+                TRUNCATE_EXISTING    // 내용 삭제 후 새로 쓰기
         );
     }
-    private void writeJsonToFile(Path target, String json) throws IOException {
-        Files.writeString(target, json, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    private void writeSingleJsonToFile(Path target, String json) throws IOException {
+        Files.writeString(target, json, UTF_8, CREATE, TRUNCATE_EXISTING);
     }
 
     private String toJsonString(Say s) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{\n");
-        sb.append("\t\"id\": ").append(s.getId()).append(",\n");
-        sb.append("\t\"content\": ").append("\"").append(s.getContent()).append("\",\n");
-        sb.append("\t\"author\": ").append("\"").append(s.getAuthor()).append("\"\n");
-        sb.append("}\n");
+        sb.append("\t{\n");
+        sb.append("\t\t\"id\": ").append(s.getId()).append(",\n");
+        sb.append("\t\t\"content\": ").append("\"").append(s.getContent()).append("\",\n");
+        sb.append("\t\t\"author\": ").append("\"").append(s.getAuthor()).append("\"\n");
+        sb.append("\t}");
         return sb.toString();
     }
     private Say parseJsonToSay(String json) {
@@ -229,5 +250,24 @@ public class FileSayRepositoryV1 implements SayRepository{
         }
 
         return new Say(id, author.toString(), content.toString());
+    }
+
+    private List<Say> parseJsonToSayList(String json) {
+        List<Say> sayList = new ArrayList<>();
+
+        json = json.trim();
+        if(json.startsWith("["))
+            json = json.substring(1);
+        if(json.endsWith("]"))
+            json = json.substring(0,json.length()-1);
+
+        String[] lines = json.split("},\\s*\\{");
+        for (String line : lines) {
+            line = line.replace("{", "").replace("}", "").trim();
+//            System.out.println(parseJsonToSay(line));
+            sayList.add(parseJsonToSay(line));
+        }
+
+        return sayList;
     }
 }

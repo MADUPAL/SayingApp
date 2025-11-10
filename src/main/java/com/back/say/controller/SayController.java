@@ -23,8 +23,10 @@ public class SayController {
         while (true) {
             System.out.print("명령) ");
             String cmd = sc.nextLine().trim();
-            if (cmd.equals("종료"))
+            if (cmd.equals("종료")){
+                System.out.println("== 앱 종료 ==");
                 break;
+            }
 
             Rq rq = new Rq(cmd);
             handle(rq);
@@ -34,7 +36,7 @@ public class SayController {
     private void handle(Rq rq) {
         switch (rq.getActionName()) {
             case "등록" -> handleCreate();
-            case "목록" -> handleList();
+            case "목록" -> handleList(rq);
             case "삭제" -> {
                 int id = rq.getParamAsInt("id", -1);
                 if (id == -1) {
@@ -88,14 +90,23 @@ public class SayController {
         }
     }
 
-    private void handleList() {
+    private void handleList(Rq rq) {
         try {
+            String keywordType = rq.getParam("keywordType", "");
             System.out.println("번호 / 작가 / 명언");
             System.out.println("=====================");
-            List<ResponseSayDto> allSays = sayService.findAll();
-            for (ResponseSayDto allSay : allSays) {
-                System.out.println(allSay);
+            if (keywordType == null || keywordType.isBlank()) {
+                List<ResponseSayDto> allSays = sayService.findAll();
+                for (ResponseSayDto allSay : allSays) {
+                    System.out.println(allSay);
+                }
+            } else if (keywordType.equals("author")) {
+                String keyword = rq.getParam("keyword", "");
+                sayService.findByContentContains(keyword);
+            } else if (keywordType.equals("content")) {
+
             }
+
         } catch (Exception e) {
             System.out.println("오류가 발생했습니다: " + e.getMessage());
         }
