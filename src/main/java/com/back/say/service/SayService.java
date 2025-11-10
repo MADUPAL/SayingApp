@@ -56,4 +56,16 @@ public class SayService {
     public void build() {
         sayRepository.build();
     }
+
+    public List<Say> findAllPaged(int page, int size) {
+        int offset = (page-1) * size;
+        return sayRepository.findAllPaged(offset, size); //offset부터 size개만큼
+    }
+
+    public List<Say> findByAuthorContains(String keyword) {
+        return sayRepository.findByAuthorContains(keyword);
+    }
+    public List<Say> findByContentContains(String keyword) {
+        return sayRepository.findByContentContains(keyword);
+    }
 }

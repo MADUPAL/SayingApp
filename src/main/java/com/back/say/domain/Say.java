@@ -1,5 +1,7 @@
 package com.back.say.domain;
 
+import java.util.Objects;
+
 public class Say {
 
     private int id;
@@ -27,5 +29,17 @@ public class Say {
     @Override
     public String toString() {
         return id + " / " + author + " / " + content;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Say say = (Say) o;
+        return id == say.id && Objects.equals(author, say.author) && Objects.equals(content, say.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, author, content);
     }
 }
