@@ -2,6 +2,7 @@ package com.back.say.repository;
 
 import com.back.say.domain.Say;
 import com.back.say.dto.SayDto;
+import com.back.say.utils.Pageable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -60,17 +61,22 @@ public class InMemorySayRepository implements SayRepository {
     }
 
     @Override
-    public List<Say> findAllPaged(int offset, int limit) {
+    public List<Say> findAllPaged(Pageable pageable) {
         return List.of();
     }
 
     @Override
-    public List<Say> findByAuthorContains(String keyword) {
+    public List<Say> findByAuthorContains(String keyword, Pageable pageable) {
         return List.of();
     }
 
     @Override
-    public List<Say> findByContentContains(String keyword) {
+    public List<Say> findByContentContains(String keyword, Pageable pageable) {
+        return List.of();
+    }
+
+    @Override
+    public List<Say> findByAuthorContainsOrContentContains(String keyword, Pageable pageable) {
         return List.of();
     }
 }

@@ -3,6 +3,7 @@ package com.back.say.repository;
 import com.back.say.domain.Say;
 import com.back.say.dto.SayDto;
 import com.back.say.exception.RepositoryException;
+import com.back.say.utils.Pageable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -119,20 +120,31 @@ public class FileSayRepositoryV1 implements SayRepository{
 
     }
 
+    /**
+     *
+     * 미구현
+     */
+
     @Override
-    public List<Say> findAllPaged(int offset, int limit) {
+    public List<Say> findAllPaged(Pageable pageable) {
         return List.of();
     }
 
     @Override
-    public List<Say> findByAuthorContains(String keyword) {
+    public List<Say> findByAuthorContains(String keyword, Pageable pageable) {
         return List.of();
     }
 
     @Override
-    public List<Say> findByContentContains(String keyword) {
+    public List<Say> findByContentContains(String keyword, Pageable pageable) {
         return List.of();
     }
+
+    @Override
+    public List<Say> findByAuthorContainsOrContentContains(String keyword, Pageable pageable) {
+        return List.of();
+    }
+
 
     private void ensureDir() throws IOException {
         if (Files.notExists(dirPath)) {

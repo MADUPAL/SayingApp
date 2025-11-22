@@ -3,6 +3,7 @@ package com.back.say.repository;
 import com.back.say.domain.Say;
 import com.back.say.dto.SayDto;
 import com.back.say.exception.RepositoryException;
+import com.back.say.utils.Pageable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,8 +12,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.*;
@@ -91,7 +94,9 @@ public class FileSayRepositoryV2 implements SayRepository{
     @Override
     public List<Say> findAll() {
         loadDataIfNeeded();
-        return new ArrayList<>(sayCache);
+        return sayCache.reversed().stream()
+                .limit(5)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -107,20 +112,45 @@ public class FileSayRepositoryV2 implements SayRepository{
     }
 
     @Override
-    public List<Say> findAllPaged(int offset, int limit) {
-        return List.of();
+    public List<Say> findAllPaged(Pageable pageable) {
+        loadDataIfNeeded();
+        return sayCache.reversed().stream()
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
     }
 
     @Override
-    public List<Say> findByAuthorContains(String keyword) {
-        return List.of();
+    public List<Say> findByAuthorContains(String keyword, Pageable pageable) {
+        loadDataIfNeeded();
+        return sayCache.reversed().stream()
+                .filter(say -> say.getAuthor().contains(keyword))
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
+        // Say::getId -> 오토박싱 -> id가 int인데 integer로 알아서 바꿔줌
+        // s->s.getId() -> 오토박싱 안됨 -> 그냥 int로 나옴
     }
 
     @Override
-    public List<Say> findByContentContains(String keyword) {
-        return List.of();
+    public List<Say> findByContentContains(String keyword, Pageable pageable) {
+        loadDataIfNeeded();
+        return sayCache.reversed().stream()
+                .filter(say->say.getContent().contains(keyword))
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
     }
 
+    @Override
+    public List<Say> findByAuthorContainsOrContentContains(String keyword, Pageable pageable) {
+        loadDataIfNeeded();
+        return sayCache.reversed().stream()
+                .filter(say-> (say.getAuthor().contains(keyword) || say.getContent().contains(keyword)))
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .toList();
+    }
 
     private void loadDataIfNeeded() {
         if(loaded)
@@ -129,7 +159,7 @@ public class FileSayRepositoryV2 implements SayRepository{
             ensureDir();
             String json = Files.readString(dataPath, UTF_8).trim();
             if (json.equals("[]") || json.isBlank()){
-                sayCache = new ArrayList<>();
+                sayCache = makeDummyData();
             } else {
                 sayCache = parseJsonToSayList(json);
             }
@@ -267,6 +297,17 @@ public class FileSayRepositoryV2 implements SayRepository{
 //            System.out.println(parseJsonToSay(line));
             sayList.add(parseJsonToSay(line));
         }
+
+        return sayList;
+    }
+
+    private List<Say> makeDummyData() throws IOException {
+        ArrayList<Say> sayList = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            sayList.add(new Say(i, "작자미상 "+i, "명언"+i));
+        }
+        writeAllJsonToFile(sayList);
+        writeLastId(10);
 
         return sayList;
     }

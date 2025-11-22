@@ -4,6 +4,7 @@ import com.back.say.dto.ResponseSayDto;
 import com.back.say.dto.SayDto;
 import com.back.say.exception.SayNotFoundException;
 import com.back.say.service.SayService;
+import com.back.say.utils.Pageable;
 import com.back.say.utils.Rq;
 
 import java.util.List;
@@ -92,23 +93,26 @@ public class SayController {
 
     private void handleList(Rq rq) {
         try {
-            String keywordType = rq.getParam("keywordType", "");
+            String keywordType = rq.getParam("keywordType", "all");
+            String keyword = rq.getParam("keyword", "");
+            int page = rq.getParamAsInt("page", 1);
+
+            Pageable pageable = new Pageable(page, 5);
+
             System.out.println("번호 / 작가 / 명언");
             System.out.println("=====================");
-            if (keywordType == null || keywordType.isBlank()) {
-                List<ResponseSayDto> allSays = sayService.findAll();
-                for (ResponseSayDto allSay : allSays) {
-                    System.out.println(allSay);
-                }
-            } else if (keywordType.equals("author")) {
-                String keyword = rq.getParam("keyword", "");
-                sayService.findByContentContains(keyword);
-            } else if (keywordType.equals("content")) {
 
-            }
+            List<ResponseSayDto> dtoList = sayService.getList(keywordType, keyword, pageable);
+            printDto(dtoList);
 
         } catch (Exception e) {
             System.out.println("오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    private static void printDto(List<ResponseSayDto> dtoList) {
+        for (ResponseSayDto sayData : dtoList) {
+            System.out.println(sayData);
         }
     }
 
