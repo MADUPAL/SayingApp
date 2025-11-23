@@ -1,9 +1,11 @@
 package com.back.say.repository;
 
 import com.back.say.domain.Say;
+import com.back.say.dto.PageDto;
 import com.back.say.dto.SayDto;
 import com.back.say.exception.RepositoryException;
 import com.back.say.utils.Pageable;
+import com.back.say.utils.SaySearchCondition;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -102,7 +104,7 @@ public class FileSayRepositoryV2 implements SayRepository{
     /**
      * 10 단계
      */
-    @Override
+
     public void build() {
         try {
             writeAllJsonToFile(sayCache);
@@ -112,44 +114,30 @@ public class FileSayRepositoryV2 implements SayRepository{
     }
 
     @Override
-    public List<Say> findAllPaged(Pageable pageable) {
+    public PageDto<Say> findPage(SaySearchCondition cond, Pageable pageable) {
         loadDataIfNeeded();
-        return sayCache.reversed().stream()
-                .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .toList();
-    }
+        Stream<Say> stream = sayCache.reversed().stream();
 
-    @Override
-    public List<Say> findByAuthorContains(String keyword, Pageable pageable) {
-        loadDataIfNeeded();
-        return sayCache.reversed().stream()
-                .filter(say -> say.getAuthor().contains(keyword))
-                .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .toList();
-        // Say::getId -> 오토박싱 -> id가 int인데 integer로 알아서 바꿔줌
-        // s->s.getId() -> 오토박싱 안됨 -> 그냥 int로 나옴
-    }
+        if (cond.hasAuthorCondition() && cond.hasContentCondition()) {
+            String k = cond.getAuthorContains();
+            stream = stream.filter(say->say.getAuthor().contains(k) || say.getContent().contains(k));
+        } else if (cond.hasAuthorCondition()) {
+            String k = cond.getAuthorContains();
+            stream = stream.filter(say->say.getAuthor().contains(k));
+        } else if (cond.hasContentCondition()) {
+            String k = cond.getContentContains();
+            stream = stream.filter(say->say.getContent().contains(k));
+        }
 
-    @Override
-    public List<Say> findByContentContains(String keyword, Pageable pageable) {
-        loadDataIfNeeded();
-        return sayCache.reversed().stream()
-                .filter(say->say.getContent().contains(keyword))
-                .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .toList();
-    }
+        List<Say> filtered = stream.toList();
+        int totalCount = filtered.size();
 
-    @Override
-    public List<Say> findByAuthorContainsOrContentContains(String keyword, Pageable pageable) {
-        loadDataIfNeeded();
-        return sayCache.reversed().stream()
-                .filter(say-> (say.getAuthor().contains(keyword) || say.getContent().contains(keyword)))
-                .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .toList();
+        int from = Math.min(pageable.getOffset(), totalCount);
+        int to = Math.min(from + pageable.getPageSize(), totalCount);
+
+        List<Say> pageContent = filtered.subList(from, to);
+
+        return new PageDto<>(pageContent, pageable.getPageNo(), pageable.getPageSize(), totalCount);
     }
 
     private void loadDataIfNeeded() {

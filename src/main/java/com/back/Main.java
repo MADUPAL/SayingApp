@@ -3,6 +3,7 @@ package com.back;
 import com.back.say.controller.SayController;
 import com.back.say.repository.FileSayRepositoryV1;
 import com.back.say.repository.FileSayRepositoryV2;
+import com.back.say.repository.InMemorySayRepository;
 import com.back.say.repository.SayRepository;
 import com.back.say.service.SayService;
 

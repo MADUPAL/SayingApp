@@ -1,5 +1,6 @@
 package com.back.say.controller;
 
+import com.back.say.dto.PageDto;
 import com.back.say.dto.ResponseSayDto;
 import com.back.say.dto.SayDto;
 import com.back.say.exception.SayNotFoundException;
@@ -9,6 +10,8 @@ import com.back.say.utils.Rq;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SayController {
     private final SayService sayService;
@@ -96,14 +99,14 @@ public class SayController {
             String keywordType = rq.getParam("keywordType", "all");
             String keyword = rq.getParam("keyword", "");
             int page = rq.getParamAsInt("page", 1);
-
             Pageable pageable = new Pageable(page, 5);
+
+            PageDto<ResponseSayDto> result = sayService.getPage(keywordType, keyword, pageable);
 
             System.out.println("번호 / 작가 / 명언");
             System.out.println("=====================");
-
-            List<ResponseSayDto> dtoList = sayService.getList(keywordType, keyword, pageable);
-            printDto(dtoList);
+            printDto(result.getContent());
+            printPage(result);
 
         } catch (Exception e) {
             System.out.println("오류가 발생했습니다: " + e.getMessage());
@@ -149,4 +152,22 @@ public class SayController {
 
     }
 
+    private void printPage(PageDto<?> result) {
+        int total = result.getTotalPages();
+        int curr = result.getPageNo();
+        if (total == 0) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("페이지 : ");
+
+        for (int i = 1; i <= total; i++) {
+            if (i == curr) sb.append("[").append(i).append("]");
+            else sb.append(i);
+
+            if (i < total) sb.append(" / ");
+        }
+
+        System.out.println(sb);
+    }
 }
